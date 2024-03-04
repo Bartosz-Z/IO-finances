@@ -11,9 +11,12 @@ Na podstawie 3 ostatnich wartości (najnowszych) z każdego regionu + ostatnich 
 
 Genotyp będzie miał 30 genoów (po 6 na każdy region).
 
+Na podstawie genotypu (z wyłączeniem pięciu współczynników do filtru wykładniczego) będzie podejmowana decyzja czy sprzedać/kupić i ile akcji.
+Modelem będzie kombinacja liniowa wyliczonych parametrów bądź drzewo decyzjne.
+
 Ewaluacją będzie zastosowanie modelu po kolei po całym zbiorze historycznych danych od początku do końca.
 Wynikiem będą dwie wartości:
-- Posiadane pieniądze na końcu ewaluacji przez model (suma akcji po aktualnym kursie + posiadane rezerwy)
+- Posiadane pieniądze na końcu ewaluacji przez model (suma akcji po aktualnym kursie + posiadane rezerwy) (ROI)
 - Współcznnik MDD (Maximum Drawdown)
 
 Pierwszy z tych współcznników  będzie maksymalizowany, a drugi minimalizowany.
