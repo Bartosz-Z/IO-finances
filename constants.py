@@ -1,0 +1,1 @@
+MONEY_MULTIPLIER: int = 10_000

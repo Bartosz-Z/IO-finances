@@ -1,5 +1,6 @@
 import numpy as np
 from exchange_rate_data import ExchangeRateData
+import constants
 
 
 class Loader:
@@ -8,4 +9,4 @@ class Loader:
 
     def load_csv_exchange_rate_data(self, path: str):
         data = np.genfromtxt(path, delimiter=',', skip_header=1, encoding=self._encoding)
-        return ExchangeRateData(data[:, 2:3].flat)
+        return ExchangeRateData(np.squeeze((data[:, 2:3] * constants.MONEY_MULTIPLIER).astype(np.int32)))
