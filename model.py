@@ -94,7 +94,7 @@ class Model:
         print("mdd: ", self._calculate_mdd())
         print("should be picks: [100, 145, 126, 208]")
         print("should be downs: [60, 110, 39]")
-        print("should be mdd: (126 - 39) / 126 = 87 / 126 = 0.69")
+        print("should be mdd: (145 - 39) / 126 = 106 / 145 = 0.73")
         self.reset()
         self._total_money_history = np.array([
             100, 90, 80, 70, 60, 65, 75, 85, 95, 105, 115, 125, 135, 145, 140, 130, 120, 110
@@ -111,7 +111,7 @@ class Model:
         print("mdd: ", self._calculate_mdd())
         print("should be picks: [145, 126]")
         print("should be downs: [110, 39]")
-        print("should be mdd: (126 - 39) / 126 = 87 / 126 = 0.69")
+        print("should be mdd: (145 - 39) / 126 = 106 / 145 = 0.73")
         self.reset()
 
     # Return of investment
@@ -120,39 +120,12 @@ class Model:
 
     # Maximum drawdown
     def _calculate_mdd(self) -> float:
-        picks = []
-        downs = []
-        last_pick = self._total_money_history[0]
-        last_down = self._total_money_history[0]
-        if self._total_money_history.shape[0] > 1 and self._total_money_history[1] <= last_pick:
-            picks.append(last_pick)
-
-        for money in self._total_money_history:
-            if money < last_pick:
-                if len(downs) == len(picks):
-                    picks.append(last_pick)
-                    last_down = money
-            else:
-                last_pick = money
-
-            if money > last_down:
-                if len(downs) < len(picks):
-                    downs.append(last_down)
-                    last_pick = money
-            else:
-                last_down = money
-
-        if self._total_money_history.shape[0] > 1:
-            if self._total_money_history[-2] > self._total_money_history[-1]:
-                downs.append(self._total_money_history[-1])
-
-        mdd = 0.
-        for i in range(len(downs)):
-            i_mdd = (picks[i] - downs[i]) / picks[i]
-            if i_mdd > mdd:
-                mdd = i_mdd
-
-        return mdd
+        i = np.argmax(np.maximum.accumulate(self._total_money_history) - self._total_money_history)
+        if i == 0:
+            j = 0
+        else:
+            j = np.argmax(self._total_money_history[:i])
+        return (self._total_money_history[j] - self._total_money_history[i]) / self._total_money_history[j]
 
     def get_total_money_history(self):
         return np.array(self._total_money_history)
