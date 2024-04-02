@@ -5,11 +5,11 @@ from exchange_rate_data import ExchangeRateData
 import constants
 
 
-class Model:
+class ExchangeModel:
     def __init__(self, data: ExchangeRateData, start_money: int = 1000):
         self._data: ExchangeRateData = data
         self._current_step: int = 0
-        self._start_step: int = 3
+        self._start_step: int = 30
         self._end_step: int = self._data.size()
 
         self._start_money = start_money * constants.MONEY_MULTIPLIER
@@ -38,14 +38,12 @@ class Model:
 
     # Sell or buy stocks
     def _make_decision(self, genotype):
-        val = ((genotype[0] - 0.5) * self._data.history[self._current_step - 1] +
-               (genotype[1] - 0.5) * self._data.history[self._current_step - 2] +
-               (genotype[2] - 0.5) * self._data.history[self._current_step - 3]) * 5
+        val = np.dot(genotype - 0.5, self._data.history[self._current_step - 30:self._current_step]) * 5
         e_pow = -0.1 * val
         # Check for overflow
-        if e_pow > 32:
+        if e_pow > 16:
             val = 0.
-        elif e_pow < -32:
+        elif e_pow < -16:
             val = 1.
         else:
             val = 1. / (1. + np.exp(e_pow))
@@ -70,11 +68,11 @@ class Model:
         self._money_history[self._current_step] = self._current_money
         self._stocks_history[self._current_step] = self._current_stocks
 
-    def evaluate(self, genotypes):
+    def evaluate(self, genotypes, investment_time: int = 0):
         self.reset()
         result = np.empty((genotypes.shape[0], 2), dtype=np.float64)
         for i, genotype in enumerate(genotypes):
-            for s in range(self._start_step, self._end_step):
+            for s in range(self._start_step, max(self._start_step, self._end_step - investment_time)):
                 self._current_step = s
                 self._step(genotype)
             result[i, 0] = -self._calculate_roi()
