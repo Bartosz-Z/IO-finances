@@ -4,6 +4,7 @@ from pymoo.algorithms.moo.nsga3 import NSGA3
 from pymoo.algorithms.moo.sms import SMSEMOA
 
 import constants
+from ArgumentParser import ArgumentParser
 from loader import Loader
 from exchange_model import ExchangeModel
 from exchange_rate_problem import ExchangeRateProblem
@@ -55,8 +56,10 @@ def solve(data, algorithm):
 
 
 def main():
+    argument_parser = ArgumentParser()
+    args = argument_parser.parse()
     loader = Loader()
-    data = loader.load_csv_exchange_rate_data("franc_swiss_data.csv")
+    data = loader.load_csv_exchange_rate_data(args.data_path)
     print(data.history[:20])
     data_better = ExchangeRateData(data.history[550:950])
     data_worse = ExchangeRateData(data.history[:400])
