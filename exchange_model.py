@@ -9,7 +9,7 @@ class ExchangeModel:
     def __init__(self, data: ExchangeRateData, start_money: int = 1000):
         self._data: ExchangeRateData = data
         self._current_step: int = 0
-        self._start_step: int = 30
+        self._start_step: int = 15
         self._end_step: int = self._data.size()
 
         self._start_money = start_money * constants.MONEY_MULTIPLIER
@@ -38,8 +38,8 @@ class ExchangeModel:
 
     # Sell or buy stocks
     def _make_decision(self, genotype):
-        val = np.dot(genotype - 0.5, self._data.history[self._current_step - 30:self._current_step]) * 5
-        e_pow = -0.1 * val
+        val = np.dot(genotype - 0.5, self._data.history[self._current_step - 10:self._current_step]) * 5
+        e_pow = -2.94 * val / (2.5 * genotype.shape[0] * 0.5)
         # Check for overflow
         if e_pow > 16:
             val = 0.
@@ -49,16 +49,16 @@ class ExchangeModel:
             val = 1. / (1. + np.exp(e_pow))
         current_rate = self._data.history[self._current_step]
 
-        # For val between 0.45 and 0.55 do nothing
-        if val > 0.55:
+        # For val between 0.49 and 0.51 do nothing
+        if val > 0.51:
             # Buy
             max_stocks_to_buy = self._current_money // current_rate
-            stocks_to_buy = math.ceil(max_stocks_to_buy * max(1., (val - 0.55) / 0.45))
+            stocks_to_buy = math.ceil(max_stocks_to_buy * max(1., (val - 0.51) / 0.49))
             self._current_money -= stocks_to_buy * current_rate
             self._current_stocks += stocks_to_buy
-        elif val < 0.45:
+        elif val < 0.49:
             # Sell
-            stocks_to_sell = math.ceil(self._current_stocks * max(1., (0.45 - val) / 0.45))
+            stocks_to_sell = math.ceil(self._current_stocks * max(1., (0.49 - val) / 0.49))
             self._current_money += stocks_to_sell * current_rate
             self._current_stocks -= stocks_to_sell
 
