@@ -11,6 +11,10 @@ class DataExtractor:
         self.slice_overlap = slice_overlap
         self.plot_results = False # Debug
 
+    def normalize(self, input_data):
+        input_data_min = input_data.min()
+        input_data_max = input_data.max()
+        return (input_data - input_data_min) / (input_data_max - input_data_min)
 
     def exponential_filter(self, time_step, alpha_value):
         filtered_data = np.zeros((self.slice_size,))
@@ -24,7 +28,7 @@ class DataExtractor:
         if self.plot_results:
             # Plot individual filters
             plt.plot([i for i in range(time_step - self.slice_size, time_step)], filtered_data)
-        return filtered_data[-self.parameters_per_slice:]
+        return self.normalize(filtered_data[-self.parameters_per_slice:])
 
     def get_minimal_time_step(self):
         slice_shift = self.slice_size - self.slice_overlap
