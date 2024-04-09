@@ -12,5 +12,5 @@ if __name__ == "__main__":
     # print(DE.get_minimal_time_step())
     # DE.get_exponential_filter_parameters(time_step_0=150, alpha_values=[1, 1, 1, 1, 1])
 
-    DE.get_polynomial_parameters(150, 4)
+    DE.get_polynomial_parameters(150, 5)
     

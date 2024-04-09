@@ -30,14 +30,17 @@ class DataExtractor:
     def get_minimal_time_step(self):
         slice_shift = self.slice_size - self.slice_overlap
         return (self.slice_count-1) * slice_shift + self.slice_size
-
-    def get_exponential_filter_parameters(self, time_step_0, alpha_values):
+    
+    def check_starting_time_point(self, time_step):
         # Check if enough data points
-        if time_step_0 < self.get_minimal_time_step():
+        if time_step < self.get_minimal_time_step():
             raise ValueError("Dataset is too small to extract parameters.")
-        if time_step_0 > len(self.data) - 1:
+        if time_step > len(self.data) - 1:
             raise ValueError("time_step_0 is too big for given dataset.")
 
+
+    def get_exponential_filter_parameters(self, time_step_0, alpha_values):
+        self.check_starting_time_point(time_step_0)
         if self.plot_results:
             # Plot whole dataset
             plt.plot([i for i in range(len(self.data))], self.data)
@@ -55,7 +58,7 @@ class DataExtractor:
         return parameters
 
 
-    def polynomial_approximation(self, x, y, degree):
+    def calculate_polynomial_coefficients(self, x, y, degree):
         # Returns: array, the coefficients of the polynomial approximation. Smallest order first.
         A = np.vander(x, degree + 1)
         coeffs = np.linalg.lstsq(A, y, rcond=None)[0]
@@ -69,28 +72,25 @@ class DataExtractor:
         return val
 
     def get_polynomial_parameters(self, time_step_0, degree):
-        if time_step_0 < self.get_minimal_time_step():
-            raise ValueError("Dataset is too small to extract parameters.")
-        if time_step_0 > len(self.data) - 1:
-            raise ValueError("time_step_0 is too big for given dataset.")
-
+        self.check_starting_time_point(time_step_0)
         parameters = np.zeros((self.slice_count, degree+1))
         slice_shift = self.slice_size - self.slice_overlap
         for i in range(self.slice_count):
             # Calculate last point of slice
             time_step = time_step_0 - i*slice_shift
-            # Calculate last 'parameters_per_slice' points of filtered values
             data_to_approximate = self.data[time_step-self.slice_size : time_step]
             X = np.array([i for i in range(self.slice_size)])
-            parameters[i] = self.polynomial_approximation(X, data_to_approximate, degree)
+            # Approximate by minimizing MSE of approximation
+            parameters[i] = self.calculate_polynomial_coefficients(X, data_to_approximate, degree)
 
             if self.plot_results:
                 print(parameters[i])
-                plot_Y = np.array([self.polynomial_value(x, parameters[i]) for x in X]) # TODO not actually data_Y
+                plot_Y = np.array([self.polynomial_value(x, parameters[i]) for x in X])
                 plt.plot(X, plot_Y, color="green")
                 plt.plot(X, data_to_approximate, color="blue")
                 plt.grid()
                 plt.show()
 
+        return parameters
         
 
