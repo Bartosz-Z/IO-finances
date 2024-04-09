@@ -12,6 +12,7 @@ class DataExtractor:
         self.plot_results = False # Debug
 
 
+
     def exponential_filter(self, time_step, alpha_value):
         filtered_data = np.zeros((self.slice_size,))
         for filtered_index, raw_data_index in enumerate(range(time_step - self.slice_size, time_step)):
@@ -52,4 +53,44 @@ class DataExtractor:
         if self.plot_results:
             plt.show()
         return parameters
-    
+
+
+    def polynomial_approximation(self, x, y, degree):
+        # Returns: array, the coefficients of the polynomial approximation. Smallest order first.
+        A = np.vander(x, degree + 1)
+        coeffs = np.linalg.lstsq(A, y, rcond=None)[0]
+        return coeffs[::-1]
+
+    def polynomial_value(self, x, coeffs):
+        deg = len(coeffs)
+        val = 0
+        for i in range(deg):
+            val += x**i * coeffs[i]
+        return val
+
+    def get_polynomial_parameters(self, time_step_0, degree):
+        if time_step_0 < self.get_minimal_time_step():
+            raise ValueError("Dataset is too small to extract parameters.")
+        if time_step_0 > len(self.data) - 1:
+            raise ValueError("time_step_0 is too big for given dataset.")
+
+        parameters = np.zeros((self.slice_count, degree+1))
+        slice_shift = self.slice_size - self.slice_overlap
+        for i in range(self.slice_count):
+            # Calculate last point of slice
+            time_step = time_step_0 - i*slice_shift
+            # Calculate last 'parameters_per_slice' points of filtered values
+            data_to_approximate = self.data[time_step-self.slice_size : time_step]
+            X = np.array([i for i in range(self.slice_size)])
+            parameters[i] = self.polynomial_approximation(X, data_to_approximate, degree)
+
+            if self.plot_results:
+                print(parameters[i])
+                plot_Y = np.array([self.polynomial_value(x, parameters[i]) for x in X]) # TODO not actually data_Y
+                plt.plot(X, plot_Y, color="green")
+                plt.plot(X, data_to_approximate, color="blue")
+                plt.grid()
+                plt.show()
+
+        
+
