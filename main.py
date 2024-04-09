@@ -34,14 +34,14 @@ def plot_result(data, genotype, model, ax):
 
 def solve(data, algorithm):
     model = ExchangeModel(data)
-    problem = ExchangeRateProblem(10, model)
+    problem = ExchangeRateProblem(25, model)
     res = minimize(problem,
                    algorithm,
                    ('n_gen', 1000),
                    seed=106,
                    verbose=False)
     print(res.F)
-    print((res.X - 0.5) * 5)
+    print(f"alphas: {res.X[:5]}, weights: {(res.X[5:] - 0.5) * 20}")
     fig, axs = plt.subplots(2, 2, sharex='all', sharey='all')
     plot_result(data=data, model=model, genotype=res.X[1 * len(res.X) // 4 - 1], ax=axs[0, 0])
     plot_result(data=data, model=model, genotype=res.X[2 * len(res.X) // 4 - 1], ax=axs[0, 1])

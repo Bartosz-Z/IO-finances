@@ -3,7 +3,7 @@ if __name__ == "__main__":
     from data_extrator import DataExtractor
 
     loader = Loader()
-    data = loader.load_csv_exchange_rate_data("franc_swiss_data.csv")
+    data = loader.load_csv_exchange_rate_data("Data/franc_swiss_data.csv")
     print(data.history[:20])
     data.history = data.history[:200]  # TODO To be removed
 
