@@ -2,14 +2,16 @@ import numpy as np
 import math
 
 from exchange_rate_data import ExchangeRateData
+from data_extrator import DataExtractor
 import constants
 
 
 class ExchangeModel:
     def __init__(self, data: ExchangeRateData, start_money: int = 1000):
         self._data: ExchangeRateData = data
+        self._data_extractor = DataExtractor(self._data.history, 5, 20, 4, 5)
         self._current_step: int = 0
-        self._start_step: int = 15
+        self._start_step: int = self._data_extractor.get_minimal_time_step()
         self._end_step: int = self._data.size()
 
         self._start_money = start_money * constants.MONEY_MULTIPLIER
@@ -22,6 +24,8 @@ class ExchangeModel:
         self._money_history[:self._start_step] = self._current_money
         self._stocks_history = np.empty(self._end_step, dtype=np.int64)
         self._stocks_history[:self._start_step] = 0
+
+        self._ln_99 = np.log(99.)
 
     def reset(self):
         self._current_step: int = 0
@@ -38,8 +42,9 @@ class ExchangeModel:
 
     # Sell or buy stocks
     def _make_decision(self, genotype):
-        val = np.dot(genotype - 0.5, self._data.history[self._current_step - 10:self._current_step]) * 5
-        e_pow = -2.94 * val / (2.5 * genotype.shape[0] * 0.5)
+        parameters = self._data_extractor.get_exponential_filter_parameters(self._current_step, genotype[:5])
+        val = np.dot(genotype[5:] - 0.5, parameters.flat) * 20
+        e_pow = -self._ln_99 * val / parameters.size
         # Check for overflow
         if e_pow > 16:
             val = 0.
