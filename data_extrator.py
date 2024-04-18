@@ -16,7 +16,7 @@ class DataExtractor:
         input_data_max = input_data.max()
         return (input_data - input_data_min) / (input_data_max - input_data_min)
     
-    def get_genome_size(self):
+    def get_genotype_size(self):
         return (self.slice_count + 1) * self.parameters_per_slice
 
     def exponential_filter(self, time_step, alpha_value):
