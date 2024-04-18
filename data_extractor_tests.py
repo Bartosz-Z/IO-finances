@@ -9,6 +9,8 @@ if __name__ == "__main__":
 
     DE = DataExtractor(data.history, slice_count=5, slice_size=20, parameters_per_slice=6, slice_overlap=0)
     DE.plot_results = True
-    print(DE.get_minimal_time_step())
-    DE.get_exponential_filter_parameters(time_step_0=150, alpha_values=[1, 1, 1, 1, 1])
+    # print(DE.get_minimal_time_step())
+    # DE.get_exponential_filter_parameters(time_step_0=150, alpha_values=[1, 1, 1, 1, 1])
+
+    DE.get_polynomial_parameters(150, 5)
     

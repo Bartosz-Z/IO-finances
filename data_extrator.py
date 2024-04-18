@@ -15,6 +15,9 @@ class DataExtractor:
         input_data_min = input_data.min()
         input_data_max = input_data.max()
         return (input_data - input_data_min) / (input_data_max - input_data_min)
+    
+    def get_genotype_size(self):
+        return (self.slice_count + 1) * self.parameters_per_slice
 
     def exponential_filter(self, time_step, alpha_value):
         filtered_data = np.zeros((self.slice_size,))
@@ -33,14 +36,17 @@ class DataExtractor:
     def get_minimal_time_step(self):
         slice_shift = self.slice_size - self.slice_overlap
         return (self.slice_count-1) * slice_shift + self.slice_size
-
-    def get_exponential_filter_parameters(self, time_step_0, alpha_values):
+    
+    def check_starting_time_point(self, time_step):
         # Check if enough data points
-        if time_step_0 < self.get_minimal_time_step():
+        if time_step < self.get_minimal_time_step():
             raise ValueError("Dataset is too small to extract parameters.")
-        if time_step_0 > len(self.data) - 1:
+        if time_step > len(self.data) - 1:
             raise ValueError("time_step_0 is too big for given dataset.")
 
+
+    def get_exponential_filter_parameters(self, time_step_0, alpha_values):
+        self.check_starting_time_point(time_step_0)
         if self.plot_results:
             # Plot whole dataset
             plt.plot([i for i in range(len(self.data))], self.data)
@@ -55,5 +61,42 @@ class DataExtractor:
 
         if self.plot_results:
             plt.show()
+        return parameters # Potencjalnie normalize tutaj zamiast w exponential_filter
+
+
+    def calculate_polynomial_coefficients(self, x, y, degree):
+        # Returns: array, the coefficients of the polynomial approximation. Smallest order first.
+        A = np.vander(x, degree + 1)
+        coeffs = np.linalg.lstsq(A, y, rcond=None)[0]
+        return coeffs[::-1]
+
+    def polynomial_value(self, x, coeffs):
+        deg = len(coeffs)
+        val = 0
+        for i in range(deg):
+            val += x**i * coeffs[i]
+        return val
+
+    def get_polynomial_parameters(self, time_step_0, degree):
+        self.check_starting_time_point(time_step_0)
+        parameters = np.zeros((self.slice_count, degree+1))
+        slice_shift = self.slice_size - self.slice_overlap
+        for i in range(self.slice_count):
+            # Calculate last point of slice
+            time_step = time_step_0 - i*slice_shift
+            data_to_approximate = self.data[time_step-self.slice_size : time_step]
+            X = np.array([i for i in range(self.slice_size)])
+            # Approximate by minimizing MSE of approximation
+            parameters[i] = self.calculate_polynomial_coefficients(X, data_to_approximate, degree)
+
+            if self.plot_results:
+                print(parameters[i])
+                plot_Y = np.array([self.polynomial_value(x, parameters[i]) for x in X])
+                plt.plot(X, plot_Y, color="green")
+                plt.plot(X, data_to_approximate, color="blue")
+                plt.grid()
+                plt.show()
+
         return parameters
-    
+        
+
