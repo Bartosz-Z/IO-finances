@@ -42,7 +42,8 @@ class ExchangeModel:
 
     # Sell or buy stocks
     def _make_decision(self, genotype):
-        parameters = self._data_extractor.get_exponential_filter_parameters(self._current_step, genotype[:5])
+        # parameters = self._data_extractor.get_exponential_filter_parameters(self._current_step, genotype[:5])
+        parameters = self._data_extractor.get_polynomial_parameters(self._current_step, 3)
         val = np.dot(genotype[5:] - 0.5, parameters.flat) * 20
         e_pow = -self._ln_99 * val / parameters.size
         # Check for overflow

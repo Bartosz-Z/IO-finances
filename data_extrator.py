@@ -15,7 +15,9 @@ class DataExtractor:
         input_data_min = input_data.min()
         input_data_max = input_data.max()
         return (input_data - input_data_min) / (input_data_max - input_data_min)
-
+    
+    def get_genome_size(self):
+        return (self.slice_count + 1) * self.parameters_per_slice
 
     def exponential_filter(self, time_step, alpha_value):
         filtered_data = np.zeros((self.slice_size,))
@@ -59,7 +61,7 @@ class DataExtractor:
 
         if self.plot_results:
             plt.show()
-        return parameters
+        return parameters # Potencjalnie normalize tutaj zamiast w exponential_filter
 
 
     def calculate_polynomial_coefficients(self, x, y, degree):
