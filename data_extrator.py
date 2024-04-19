@@ -37,9 +37,12 @@ class DataExtractor:
         return (input_data - input_data_min) / (input_data_max - input_data_min)
     
     def get_genotype_size(self):
-        exponential_filter_parameters = (self.slice_count + 1) * self.parameters_per_slice
-        polynomial_parameters = self.parameters_per_slice
-        return exponential_filter_parameters + polynomial_parameters
+        sum = 0
+        if self.exponential_module:
+            sum += (self.slice_count + 1) * self.parameters_per_slice
+        if self.polynomial_module:
+            sum += self.parameters_per_slice
+        return sum
 
     def get_minimal_time_step(self):
         slice_shift = self.slice_size - self.slice_overlap
