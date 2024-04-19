@@ -34,10 +34,10 @@ def plot_result(data, genotype, model, ax):
 
 def solve(data, algorithm):
     model = ExchangeModel(data)
-    problem = ExchangeRateProblem(25, model)
+    problem = ExchangeRateProblem(55, model)
     res = minimize(problem,
                    algorithm,
-                   ('n_gen', 1000),
+                   ('n_gen', 100),
                    seed=106,
                    verbose=False)
     print(res.F)

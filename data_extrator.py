@@ -1,15 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import copy
+import pywt
+
 
 class DataExtractor:
 
-    def __init__(self, data, slice_count, slice_size, parameters_per_slice, slice_overlap):
+    def __init__(self, data, slice_count, slice_size, parameters_per_slice, slice_overlap, polynomial_degree):
         self.data = data
         self.slice_count = slice_count
         self.slice_size = slice_size
         self.parameters_per_slice = parameters_per_slice
         self.slice_overlap = slice_overlap
         self.plot_results = False # Debug
+        self.polynomial_degree = polynomial_degree
+
+    def get_parameters(self, time_step_0, alpha_values):
+        polynomial = self.get_polynomial_parameters(time_step_0, self.polynomial_degree)
+        exponential = self.get_exponential_filter_parameters(time_step_0, alpha_values)
+        return np.concatenate((polynomial, exponential), axis=None)
 
     def normalize(self, input_data):
         input_data_min = input_data.min()
@@ -17,7 +26,9 @@ class DataExtractor:
         return (input_data - input_data_min) / (input_data_max - input_data_min)
     
     def get_genotype_size(self):
-        return (self.slice_count + 1) * self.parameters_per_slice
+        exponential_filter_parameters = (self.slice_count + 1) * self.parameters_per_slice
+        polynomial_parameters = self.parameters_per_slice
+        return exponential_filter_parameters + polynomial_parameters
 
     def exponential_filter(self, time_step, alpha_value):
         filtered_data = np.zeros((self.slice_size,))
@@ -100,3 +111,32 @@ class DataExtractor:
         return parameters
         
 
+    def reduce_coeffs(self, coeffs, reduce_num):
+        reduced_coeffs = copy.deepcopy(coeffs)
+        reduced_coeffs_len = len(reduced_coeffs)
+
+        for i in range(reduced_coeffs_len - reduce_num, reduced_coeffs_len):
+            reduced_coeffs[i] = np.zeros_like(reduced_coeffs[i])
+
+        return reduced_coeffs
+    
+    def wavelet_transform(self, time_step):
+        wavelet = 'haar'
+        level = 5
+        coeffs = pywt.wavedec(self.data[time_step-self.slice_size:time_step], wavelet, level=level)
+        # reconstructed_chart = pywt.waverec(coeffs, wavelet)
+        coeffs_reduced = self.reduce_coeffs(coeffs, 1)
+        reconstructed_chart = pywt.waverec(coeffs_reduced, wavelet)
+
+        if self.plot_results:
+            plt.figure(figsize=(10, 5))
+            plt.plot(self.data[time_step-self.slice_size:time_step], label='Original Chart')
+            plt.plot(reconstructed_chart, label='Reconstructed Signal -1', linestyle='--')
+            plt.legend()
+            plt.title('Approximation using DWT')
+            plt.show()
+
+        coeffs_flattened = []
+        for layer in coeffs_reduced:
+            coeffs_flattened.extend(layer)
+        return np.array(coeffs_flattened)
