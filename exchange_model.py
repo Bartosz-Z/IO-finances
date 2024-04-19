@@ -9,7 +9,9 @@ import constants
 class ExchangeModel:
     def __init__(self, data: ExchangeRateData, start_money: int = 1000):
         self._data: ExchangeRateData = data
-        self._data_extractor = DataExtractor(self._data.history, 5, 20, 4, 5, 5)
+        self._data_extractor = DataExtractor(self._data.history, 5, 20, 4, 5)
+        self._data_extractor.add_polynomial_module(polynomial_degree=5)
+        self._data_extractor.add_exponential_module()
         self._current_step: int = 0
         self._start_step: int = self._data_extractor.get_minimal_time_step()
         self._end_step: int = self._data.size()
