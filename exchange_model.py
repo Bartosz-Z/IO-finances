@@ -2,7 +2,7 @@ import numpy as np
 import math
 
 from exchange_rate_data import ExchangeRateData
-from data_extrator import DataExtractor
+from data_extractor import DataExtractor
 import constants
 
 

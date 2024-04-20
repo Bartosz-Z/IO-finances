@@ -1,6 +1,6 @@
 if __name__ == "__main__":
     from loader import Loader
-    from data_extrator import DataExtractor
+    from data_extractor import DataExtractor
 
     loader = Loader()
     data = loader.load_csv_exchange_rate_data("Data/franc_swiss_data.csv")

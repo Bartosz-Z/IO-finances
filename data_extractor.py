@@ -44,6 +44,20 @@ class DataExtractor:
             sum += self.parameters_per_slice
         return sum
 
+    def maximum_drawdown(self, time_step_0):
+        mdds = np.zeros((self.slice_count,))
+        slice_shift = self.slice_size - self.slice_overlap
+        for slice_idx in range(self.slice_count):
+            time_step = time_step_0 - slice_idx * slice_shift
+            slice_data = self.data[time_step - self.slice_size + 1:time_step + 1]
+            i = np.argmax(np.maximum.accumulate(slice_data) - slice_data)
+            if i == 0:
+                j = 0
+            else:
+                j = np.argmax(slice_data[:i])
+            mdds[slice_idx] = (slice_data[j] - slice_data[i]) / slice_data[j]
+        return mdds
+
     def get_minimal_time_step(self):
         slice_shift = self.slice_size - self.slice_overlap
         return (self.slice_count-1) * slice_shift + self.slice_size
