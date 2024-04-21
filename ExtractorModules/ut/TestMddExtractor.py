@@ -1,9 +1,10 @@
 import unittest
 import numpy as np
+from ExtractorModules.mdd_extractor import MddExtractor
 from data_extractor import DataExtractor
 
 
-class TestDataExtractor(unittest.TestCase):
+class TestMddExtractor(unittest.TestCase):
     def setUp(self):
         self.slice_count = 3
         self.slice_size = 5
@@ -27,46 +28,49 @@ class TestDataExtractor(unittest.TestCase):
     def create_data_extractor(self, data):
         return DataExtractor(data, self.slice_count, self.slice_size, self.parameters_per_slice, self.slice_overlap)
 
-    def check_maximum_drawdowns(self, mdds, data_extractor):
+    def create_mdd_extractor(self, data):
+        return MddExtractor(self.create_data_extractor(data))
+
+    def check_maximum_drawdowns(self, mdds, mdd_extractor):
         self.assertIsInstance(mdds, np.ndarray)
-        self.assertEqual(mdds.shape[0], data_extractor.slice_count)
+        self.assertEqual(mdds.shape[0], mdd_extractor.main_extractor.slice_count)
 
     def test_maximum_drawdown(self):
-        data_extractor = self.create_data_extractor(self.line_up_data)
-        mdds = data_extractor.maximum_drawdown(self.time_step)
-        self.check_maximum_drawdowns(mdds, data_extractor)
+        mdd_extractor = self.create_mdd_extractor(self.line_up_data)
+        mdds = mdd_extractor.get_maximum_drawdowns(self.time_step)
+        self.check_maximum_drawdowns(mdds, mdd_extractor)
         for mdd in mdds:
             self.assertAlmostEqual(mdd, 0.)
 
-        data_extractor = self.create_data_extractor(self.line_down_data)
-        mdds = data_extractor.maximum_drawdown(self.time_step)
-        self.check_maximum_drawdowns(mdds, data_extractor)
+        mdd_extractor = self.create_mdd_extractor(self.line_down_data)
+        mdds = mdd_extractor.get_maximum_drawdowns(self.time_step)
+        self.check_maximum_drawdowns(mdds, mdd_extractor)
         for i, mdd in enumerate(mdds):
-            idx = i * (data_extractor.slice_size - data_extractor.slice_overlap)
+            idx = i * (mdd_extractor.main_extractor.slice_size - mdd_extractor.main_extractor.slice_overlap)
             down = self.line_down_data[self.time_step - idx]
-            peak = self.line_down_data[self.time_step - idx - data_extractor.slice_size + 1]
+            peak = self.line_down_data[self.time_step - idx - mdd_extractor.main_extractor.slice_size + 1]
             self.assertAlmostEqual(mdds[i], (peak - down) / peak, msg=f"Slice: {i}, Peak: {peak}, Down: {down}")
 
-        data_extractor = self.create_data_extractor(self.line_down_with_spikes_data)
-        mdds = data_extractor.maximum_drawdown(self.time_step)
-        self.check_maximum_drawdowns(mdds, data_extractor)
+        mdd_extractor = self.create_mdd_extractor(self.line_down_with_spikes_data)
+        mdds = mdd_extractor.get_maximum_drawdowns(self.time_step)
+        self.check_maximum_drawdowns(mdds, mdd_extractor)
         for i, mdd in enumerate(mdds):
-            idx = i * (data_extractor.slice_size - data_extractor.slice_overlap)
+            idx = i * (mdd_extractor.main_extractor.slice_size - mdd_extractor.main_extractor.slice_overlap)
             down = self.line_down_with_spikes_data[self.time_step - idx]
-            peak = self.line_down_with_spikes_data[self.time_step - idx - data_extractor.slice_size + 3]
+            peak = self.line_down_with_spikes_data[self.time_step - idx - mdd_extractor.main_extractor.slice_size + 3]
             self.assertAlmostEqual(mdds[i], (peak - down) / peak, msg=f"Slice: {i}, Peak: {peak}, Down: {down}")
 
-        data_extractor = self.create_data_extractor(self.random_data)
-        mdds = data_extractor.maximum_drawdown(self.time_step)
-        self.check_maximum_drawdowns(mdds, data_extractor)
+        mdd_extractor = self.create_mdd_extractor(self.random_data)
+        mdds = mdd_extractor.get_maximum_drawdowns(self.time_step)
+        self.check_maximum_drawdowns(mdds, mdd_extractor)
         downs = [34., 35., 12.]
         peaks = [35., 36., 12.]
         for i, mdd in enumerate(mdds):
             self.assertAlmostEqual(mdds[i], (peaks[i] - downs[i]) / peaks[i],
                                    msg=f"Slice: {i}, Peak: {peaks[i]}, Down: {downs[i]}")
 
-        mdds = data_extractor.maximum_drawdown(self.time_step + 15)
-        self.check_maximum_drawdowns(mdds, data_extractor)
+        mdds = mdd_extractor.get_maximum_drawdowns(self.time_step + 15)
+        self.check_maximum_drawdowns(mdds, mdd_extractor)
         downs = [45., 43., 48.]
         peaks = [45., 48., 60.]
         for i, mdd in enumerate(mdds):

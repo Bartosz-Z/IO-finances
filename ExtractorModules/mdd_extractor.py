@@ -1,11 +1,10 @@
 import numpy as np
-from data_extractor import DataExtractor
 from typing import Dict
 
 
 class MddExtractor:
-    def __init__(self, main_extractor: DataExtractor):
-        self.main_extractor: DataExtractor = main_extractor
+    def __init__(self, main_extractor):
+        self.main_extractor = main_extractor
         self.__cache: Dict[int, np.ndarray] = {}
 
     def get_maximum_drawdowns(self, time_step_0):
