@@ -1,10 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from typing import Dict
+
 
 class PolynomialExtractor:
     def __init__(self, main_extractor, polynomial_degree):
         self.main_extractor = main_extractor
         self.polynomial_degree = polynomial_degree
+        self.__cache: Dict[int, np.ndarray] = {}
 
     def calculate_polynomial_coefficients(self, x, y, degree):
         # Returns: array, the coefficients of the polynomial approximation. Smallest order first.
@@ -20,6 +23,9 @@ class PolynomialExtractor:
         return val
 
     def get_polynomial_parameters(self, time_step_0):
+        if time_step_0 in self.__cache:
+            return self.__cache[time_step_0]
+
         self.main_extractor.check_starting_time_point(time_step_0)
         slice_count = self.main_extractor.slice_count
         slice_overlap = self.main_extractor.slice_overlap
@@ -43,4 +49,5 @@ class PolynomialExtractor:
                 plt.grid()
                 plt.show()
 
+        self.__cache[time_step_0] = parameters
         return parameters
