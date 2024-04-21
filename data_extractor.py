@@ -38,9 +38,11 @@ class DataExtractor:
     def get_genotype_size(self):
         genotype_size = 0
         if self.exponential_module:
-            genotype_size += (self.slice_count + 1) * self.parameters_per_slice
+            genotype_size += self.slice_count * (self.parameters_per_slice + 1)
         if self.polynomial_module:
-            genotype_size += self.parameters_per_slice
+            genotype_size += self.slice_count * (self.polynomial_module.polynomial_degree + 1)
+        if self.mdd_module:
+            genotype_size += self.slice_count
         return genotype_size
     
     def get_parameters(self, time_step_0, genotype):
@@ -51,7 +53,7 @@ class DataExtractor:
             parameters.append(self.exponential_module.get_exponential_filter_parameters(time_step_0,
                                                                                         genotype[:self.slice_count]))
         if self.mdd_module:
-            parameters.append(self.mdd_module)
+            parameters.append(self.mdd_module.get_maximum_drawdowns(time_step_0))
         return np.concatenate(parameters, axis=None)
 
     def normalize(self, input_data):

@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.algorithms.moo.moead import MOEAD
 from exchange_rate_data import ExchangeRateData
+from data_extractor import DataExtractor
 
 
 def plot_result(data, genotype, model, ax):
@@ -33,8 +34,12 @@ def plot_result(data, genotype, model, ax):
 
 
 def solve(data, algorithm):
-    model = ExchangeModel(data)
-    problem = ExchangeRateProblem(55, model)
+    extractor = DataExtractor(data.history, 5, 20, 4, 5)
+    extractor.add_polynomial_module(polynomial_degree=5)
+    extractor.add_exponential_module()
+    extractor.add_mdd_module()
+    model = ExchangeModel(data, extractor)
+    problem = ExchangeRateProblem(extractor.get_genotype_size(), model)
     res = minimize(problem,
                    algorithm,
                    ('n_gen', 100),
