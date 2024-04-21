@@ -2,8 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 import pywt
+from typing import Optional
 from ExtractorModules.polynomial_extractor import PolynomialExtractor
 from ExtractorModules.exponential_extractor import ExponentialExtractor
+from ExtractorModules.mdd_extractor import MddExtractor
+
 
 class DataExtractor:
 
@@ -13,50 +16,48 @@ class DataExtractor:
         self.slice_size = slice_size
         self.parameters_per_slice = parameters_per_slice
         self.slice_overlap = slice_overlap
-        self.plot_results = False # Debug
-        self.polynomial_module = None
-        self.exponential_module = None
+        self.plot_results = False  # Debug
+        self.polynomial_module: Optional[PolynomialExtractor] = None
+        self.exponential_module: Optional[ExponentialExtractor] = None
+        self.mdd_module: Optional[MddExtractor] = None
 
     def add_polynomial_module(self, polynomial_degree):
         self.polynomial_module = PolynomialExtractor(self, polynomial_degree)
 
     def add_exponential_module(self):
         self.exponential_module = ExponentialExtractor(self)
+
+    def add_mdd_module(self):
+        self.mdd_module = MddExtractor(self)
+
+    def get_weights(self, genotype):
+        if self.exponential_module:
+            return genotype[self.slice_count:]
+        return genotype
+
+    def get_genotype_size(self):
+        genotype_size = 0
+        if self.exponential_module:
+            genotype_size += (self.slice_count + 1) * self.parameters_per_slice
+        if self.polynomial_module:
+            genotype_size += self.parameters_per_slice
+        return genotype_size
     
-    def get_parameters(self, time_step_0, alpha_values):
+    def get_parameters(self, time_step_0, genotype):
         parameters = []
         if self.polynomial_module:
             parameters.append(self.polynomial_module.get_polynomial_parameters(time_step_0))
         if self.exponential_module:
-            parameters.append(self.exponential_module.get_exponential_filter_parameters(time_step_0, alpha_values))
+            parameters.append(self.exponential_module.get_exponential_filter_parameters(time_step_0,
+                                                                                        genotype[:self.slice_count]))
+        if self.mdd_module:
+            parameters.append(self.mdd_module)
         return np.concatenate(parameters, axis=None)
 
     def normalize(self, input_data):
         input_data_min = input_data.min()
         input_data_max = input_data.max()
         return (input_data - input_data_min) / (input_data_max - input_data_min)
-    
-    def get_genotype_size(self):
-        sum = 0
-        if self.exponential_module:
-            sum += (self.slice_count + 1) * self.parameters_per_slice
-        if self.polynomial_module:
-            sum += self.parameters_per_slice
-        return sum
-
-    def maximum_drawdown(self, time_step_0):
-        mdds = np.zeros((self.slice_count,))
-        slice_shift = self.slice_size - self.slice_overlap
-        for slice_idx in range(self.slice_count):
-            time_step = time_step_0 - slice_idx * slice_shift
-            slice_data = self.data[time_step - self.slice_size + 1:time_step + 1]
-            i = np.argmax(np.maximum.accumulate(slice_data) - slice_data)
-            if i == 0:
-                j = 0
-            else:
-                j = np.argmax(slice_data[:i])
-            mdds[slice_idx] = (slice_data[j] - slice_data[i]) / slice_data[j]
-        return mdds
 
     def get_minimal_time_step(self):
         slice_shift = self.slice_size - self.slice_overlap
