@@ -21,6 +21,19 @@ class PolynomialExtractor:
         for i in range(deg):
             val += x**i * coeffs[i]
         return val
+    
+    def normalize(self, parameters):
+        # Get to range [0, inf)
+        parameters_min = parameters.min()
+        parameters = parameters - parameters_min
+        # Apply log
+        non_zero_mask = parameters != 0
+        parameters[non_zero_mask] = np.log(parameters[non_zero_mask])
+        # Get to range [0, 1]
+        parameters_max = parameters.max()
+        if 0 != parameters_max:
+            parameters = parameters / parameters_max
+        return parameters
 
     def get_polynomial_parameters(self, time_step_0):
         if time_step_0 in self.__cache:
@@ -49,5 +62,6 @@ class PolynomialExtractor:
                 plt.grid()
                 plt.show()
 
+        parameters = self.normalize(parameters)
         self.__cache[time_step_0] = parameters
         return parameters
