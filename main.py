@@ -15,14 +15,42 @@ from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.algorithms.moo.moead import MOEAD
 from exchange_rate_data import ExchangeRateData
 from data_extractor import DataExtractor
+from pymoo.core.callback import Callback
+
+
+class ConvergenceCallback(Callback):
+    def __init__(self) -> None:
+        super().__init__()
+        self.n_evals = []
+        self.rois = []
+        self.mdds = []
+
+    def notify(self, algorithm):
+        new_rois = []
+        new_mdds = []
+        for i in range(algorithm.opt.shape[0]):
+            found = False
+            roi = -algorithm.opt[i].F[0] * 100
+            mdd = algorithm.opt[i].F[1] * 100
+            for j in range(len(new_rois)):
+                if abs(new_rois[j] - roi) < 0.00001 and abs(new_mdds[j] - mdd) < 0.00001:
+                    found = True
+                    break
+            if not found:
+                self.n_evals.append(algorithm.evaluator.n_eval)
+                new_rois.append(roi)
+                new_mdds.append(mdd)
+        self.rois.extend(new_rois)
+        self.mdds.extend(new_mdds)
 
 
 def plot_result(data, genotype, model, ax):
+    # print(model.evaluate(np.array([oooo]))[0])
     eval_res = model.evaluate(np.array([genotype]))[0]
     roi = eval_res[0]
     mdd = eval_res[1]
     print(f"Evaluation ROI and MDD: {(-roi * 100):.5f}%, {(mdd * 100):.5f}%")
-    print("Genotype:", genotype)
+    print("Genotype:", list(genotype))
     total_money_history = model.get_total_money_history()
     # money_history = model.get_money_history()
     # stocks_history = model.get_stocks_history()
@@ -33,6 +61,15 @@ def plot_result(data, genotype, model, ax):
     # plt.legend(['Total money for model', 'Money for model', 'Stocks for model', 'Exchange rate'])
 
 
+def plot_convergence(callback):
+    ax = plt.figure().add_subplot(projection='3d')
+    ax.scatter(callback.n_evals, callback.rois, callback.mdds)
+    ax.set_xlabel('Number of evaluations')
+    ax.set_ylabel('Return of investment')
+    ax.set_zlabel('Maximum drawdown')
+    plt.show()
+
+
 def solve(data, algorithm):
     extractor = DataExtractor(data.history, 5, 20, 4, 5)
     extractor.add_polynomial_module(polynomial_degree=5)
@@ -40,24 +77,52 @@ def solve(data, algorithm):
     extractor.add_mdd_module()
     model = ExchangeModel(data, extractor)
     problem = ExchangeRateProblem(extractor.get_genotype_size(), model)
+    callback = ConvergenceCallback()
     res = minimize(problem,
                    algorithm,
                    ('n_gen', 100),
+                   callback=callback,
                    seed=106,
                    verbose=False)
-    print(res.F)
-    print(f"alphas: {res.X[:5]}, weights: {(res.X[5:] - 0.5) * 20}")
-    fig, axs = plt.subplots(2, 2, sharex='all', sharey='all')
-    plot_result(data=data, model=model, genotype=res.X[1 * len(res.X) // 4 - 1], ax=axs[0, 0])
-    plot_result(data=data, model=model, genotype=res.X[2 * len(res.X) // 4 - 1], ax=axs[0, 1])
-    plot_result(data=data, model=model, genotype=res.X[3 * len(res.X) // 4 - 1], ax=axs[1, 0])
-    plot_result(data=data, model=model, genotype=res.X[4 * len(res.X) // 4 - 1], ax=axs[1, 1])
-    fig.legend(['Total money for model', 'Exchange rate'], loc='upper center', ncol=2)
-    plt.show()
-    plt.scatter(-100 * res.F[:, 0], 100 * res.F[:, 1])
+
+    unique_inds = []
+    for i in range(res.opt.shape[0]):
+        found = False
+        roi = res.opt[i].F[0]
+        mdd = res.opt[i].F[1]
+        for j in range(len(unique_inds)):
+            if abs(unique_inds[j].F[0] - roi) < 0.00001 and abs(unique_inds[j].F[1] - mdd) < 0.00001:
+                found = True
+                break
+        if not found:
+            unique_inds.append(res.opt[i])
+
+    for i in range(len(unique_inds) // 4):
+        fig, axs = plt.subplots(2, 2, sharex='all', sharey='all')
+        plot_result(data=data, model=model, genotype=unique_inds[i * 4].X, ax=axs[0, 0])
+        plot_result(data=data, model=model, genotype=unique_inds[i * 4 + 1].X, ax=axs[0, 1])
+        plot_result(data=data, model=model, genotype=unique_inds[i * 4 + 2].X, ax=axs[1, 0])
+        plot_result(data=data, model=model, genotype=unique_inds[i * 4 + 3].X, ax=axs[1, 1])
+        fig.legend(['Total money for model', 'Exchange rate'], loc='upper center', ncol=2)
+        plt.show()
+    if len(unique_inds) % 4 > 0:
+        idx = (len(unique_inds) // 4) * 4
+        fig, axs = plt.subplots(2, 2, sharex='all', sharey='all')
+        if len(unique_inds) % 4 >= 1:
+            plot_result(data=data, model=model, genotype=unique_inds[idx].X, ax=axs[0, 0])
+        if len(unique_inds) % 4 >= 2:
+            plot_result(data=data, model=model, genotype=unique_inds[idx + 1].X, ax=axs[0, 1])
+        if len(unique_inds) % 4 >= 3:
+            plot_result(data=data, model=model, genotype=unique_inds[idx + 2].X, ax=axs[1, 0])
+        if len(unique_inds) % 4 >= 4:
+            plot_result(data=data, model=model, genotype=unique_inds[idx + 3].X, ax=axs[1, 1])
+        fig.legend(['Total money for model', 'Exchange rate'], loc='upper center', ncol=2)
+        plt.show()
+    plt.scatter([-100 * inv.F[0] for inv in unique_inds], [100 * inv.F[1] for inv in unique_inds])
     plt.xlabel("ROI [%]")
     plt.ylabel("MDD [%]")
     plt.show()
+    plot_convergence(callback)
 
 
 def main():
@@ -65,10 +130,8 @@ def main():
     args = argument_parser.parse()
     loader = Loader()
     data = loader.load_csv_exchange_rate_data(args.data_path)
-    print(data.history[:20])
     data_better = ExchangeRateData(data.history[550:950])
     data_worse = ExchangeRateData(data.history[:400])
-    print()
 
     ref_dirs_moead = get_reference_directions("uniform", 2, n_partitions=12)
     moead = MOEAD(
@@ -82,15 +145,15 @@ def main():
     agemoea = AGEMOEA(pop_size=100)
     smsemoa = SMSEMOA(pop_size=100)
 
-    # solve(data=data_worse, algorithm=nsga2)
+    solve(data=data_worse, algorithm=nsga2)  # Looks good
     # solve(data=data_worse, algorithm=agemoea)
-    solve(data=data_worse, algorithm=moead)  # Looks good
+    # solve(data=data_worse, algorithm=moead)
     # solve(data=data_worse, algorithm=nsga3)
     # solve(data=data_worse, algorithm=smsemoa)
 
-    # solve(data=data_better, algorithm=nsga2)
+    solve(data=data_better, algorithm=nsga2)  # Looks good
     # solve(data=data_better, algorithm=agemoea)
-    solve(data=data_better, algorithm=moead)  # Looks good
+    # solve(data=data_better, algorithm=moead)
     # solve(data=data_better, algorithm=nsga3)
     # solve(data=data_better, algorithm=smsemoa)
 

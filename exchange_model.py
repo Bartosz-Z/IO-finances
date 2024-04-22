@@ -29,10 +29,10 @@ class ExchangeModel:
         self._ln_99 = np.log(99.)
 
     def reset(self):
-        self._current_step: int = 0
+        self._current_step = 0
 
-        self._current_money: int = self._start_money
-        self._current_stocks: int = 0
+        self._current_money = self._start_money
+        self._current_stocks = 0
 
         self._total_money_history = np.empty(self._end_step, dtype=np.int64)
         self._total_money_history[:self._start_step] = self._current_money
@@ -75,9 +75,9 @@ class ExchangeModel:
         self._stocks_history[self._current_step] = self._current_stocks
 
     def evaluate(self, genotypes, investment_time: int = 0):
-        self.reset()
         result = np.empty((genotypes.shape[0], 2), dtype=np.float64)
         for i, genotype in enumerate(genotypes):
+            self.reset()
             for s in range(self._start_step, max(self._start_step, self._end_step - investment_time)):
                 self._current_step = s
                 self._step(genotype)
