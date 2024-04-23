@@ -16,6 +16,9 @@ from pymoo.algorithms.moo.moead import MOEAD
 from exchange_rate_data import ExchangeRateData
 from data_extractor import DataExtractor
 from pymoo.core.callback import Callback
+from ExtractorModules.mdd_extractor import MddExtractor
+from ExtractorModules.polynomial_extractor import PolynomialExtractor
+from ExtractorModules.exponential_extractor import ExponentialExtractor
 
 
 class ConvergenceCallback(Callback):
@@ -72,9 +75,9 @@ def plot_convergence(callback):
 
 def solve(data, algorithm):
     extractor = DataExtractor(data.history, 5, 20, 4, 5)
-    extractor.add_polynomial_module(polynomial_degree=5)
-    extractor.add_exponential_module()
-    extractor.add_mdd_module()
+    extractor.add_extractor(PolynomialExtractor(main_extractor=extractor, polynomial_degree=5))
+    extractor.add_extractor(ExponentialExtractor(main_extractor=extractor))
+    extractor.add_extractor(MddExtractor(main_extractor=extractor))
     model = ExchangeModel(data, extractor)
     problem = ExchangeRateProblem(extractor.get_genotype_size(), model)
     callback = ConvergenceCallback()

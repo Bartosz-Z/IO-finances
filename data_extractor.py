@@ -2,10 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 import pywt
-from typing import Optional
-from ExtractorModules.polynomial_extractor import PolynomialExtractor
-from ExtractorModules.exponential_extractor import ExponentialExtractor
-from ExtractorModules.mdd_extractor import MddExtractor
+from typing import List
+from ExtractorModules.base_extractor import BaseExtractor
 
 
 class DataExtractor:
@@ -17,43 +15,29 @@ class DataExtractor:
         self.parameters_per_slice = parameters_per_slice
         self.slice_overlap = slice_overlap
         self.plot_results = False  # Debug
-        self.polynomial_module: Optional[PolynomialExtractor] = None
-        self.exponential_module: Optional[ExponentialExtractor] = None
-        self.mdd_module: Optional[MddExtractor] = None
+        self._extractors: List[BaseExtractor] = []
 
-    def add_polynomial_module(self, polynomial_degree):
-        self.polynomial_module = PolynomialExtractor(self, polynomial_degree)
-
-    def add_exponential_module(self):
-        self.exponential_module = ExponentialExtractor(self)
-
-    def add_mdd_module(self):
-        self.mdd_module = MddExtractor(self)
+    def add_extractor(self, extractor: BaseExtractor):
+        self._extractors.append(extractor)
 
     def get_weights(self, genotype):
-        if self.exponential_module:
-            return genotype[self.slice_count:]
-        return genotype
+        weights_begin_index = 0
+        for extractor in self._extractors:
+            weights_begin_index += extractor.get_genotype_data_size()
+        return genotype[weights_begin_index:]
 
     def get_genotype_size(self):
         genotype_size = 0
-        if self.exponential_module:
-            genotype_size += self.slice_count * (self.parameters_per_slice + 1)
-        if self.polynomial_module:
-            genotype_size += self.slice_count * (self.polynomial_module.polynomial_degree + 1)
-        if self.mdd_module:
-            genotype_size += self.slice_count
+        for extractor in self._extractors:
+            genotype_size += extractor.get_parameters_size() + extractor.get_genotype_data_size()
         return genotype_size
-    
+
     def get_parameters(self, time_step_0, genotype):
         parameters = []
-        if self.polynomial_module:
-            parameters.append(self.polynomial_module.get_polynomial_parameters(time_step_0))
-        if self.exponential_module:
-            parameters.append(self.exponential_module.get_exponential_filter_parameters(time_step_0,
-                                                                                        genotype[:self.slice_count]))
-        if self.mdd_module:
-            parameters.append(self.mdd_module.get_maximum_drawdowns(time_step_0))
+        current_genotype_data_index = 0
+        for extractor in self._extractors:
+            parameters.append(extractor.get_parameters(time_step_0, genotype, current_genotype_data_index))
+            current_genotype_data_index += extractor.get_genotype_data_size()
         return np.concatenate(parameters, axis=None)
 
     def normalize(self, input_data):
@@ -63,7 +47,7 @@ class DataExtractor:
 
     def get_minimal_time_step(self):
         slice_shift = self.slice_size - self.slice_overlap
-        return (self.slice_count-1) * slice_shift + self.slice_size
+        return (self.slice_count - 1) * slice_shift + self.slice_size
     
     def check_starting_time_point(self, time_step):
         # Check if enough data points
