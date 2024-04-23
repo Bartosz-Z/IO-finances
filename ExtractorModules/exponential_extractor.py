@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from base_extractor import BaseExtractor
+from ExtractorModules.base_extractor import BaseExtractor
 
 
 class ExponentialExtractor(BaseExtractor):
@@ -8,9 +8,12 @@ class ExponentialExtractor(BaseExtractor):
         super().__init__(main_extractor)
 
     def get_parameters_size(self):
-        return self._main_extractor.slice_count * (self._main_extractor.parameters_per_slice + 1)
+        return self._main_extractor.slice_count * self._main_extractor.parameters_per_slice
 
-    def exponential_filter(self, time_step, alpha_value):
+    def get_genotype_data_size(self) -> int:
+        return self._main_extractor.slice_count
+
+    def _exponential_filter(self, time_step, alpha_value):
         slice_size = self._main_extractor.slice_size
         data = self._main_extractor.data
 
@@ -27,7 +30,7 @@ class ExponentialExtractor(BaseExtractor):
             plt.plot([i for i in range(time_step - slice_size, time_step)], filtered_data)
         return self._main_extractor.normalize(filtered_data[-self._main_extractor.parameters_per_slice:])
     
-    def get_exponential_filter_parameters(self, time_step_0, alpha_values):
+    def get_parameters(self, time_step_0: int, genotype: np.ndarray, genotype_data_index: int) -> np.ndarray:
         data = self._main_extractor.data
         slice_count = self._main_extractor.slice_count
         slice_overlap = self._main_extractor.slice_overlap
@@ -45,7 +48,7 @@ class ExponentialExtractor(BaseExtractor):
             # Calculate last point of slice
             time_step = time_step_0 - i*slice_shift
             # Calculate last 'parameters_per_slice' points of filtered values
-            parameters[i] = self.exponential_filter(time_step, alpha_values[i])
+            parameters[i] = self._exponential_filter(time_step, genotype[genotype_data_index + i])
 
         if self._main_extractor.plot_results:
             plt.show()

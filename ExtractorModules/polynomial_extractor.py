@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Dict
-from base_extractor import BaseExtractor
+from ExtractorModules.base_extractor import BaseExtractor
 
 
 class PolynomialExtractor(BaseExtractor):
@@ -10,8 +10,11 @@ class PolynomialExtractor(BaseExtractor):
         self.polynomial_degree = polynomial_degree
         self.__cache: Dict[int, np.ndarray] = {}
 
-    def get_parameters_size(self):
+    def get_parameters_size(self) -> int:
         return self._main_extractor.slice_count * (self.polynomial_degree + 1)
+
+    def get_genotype_data_size(self) -> int:
+        return 0
 
     def _calculate_polynomial_coefficients(self, x, y):
         # Returns: array, the coefficients of the polynomial approximation. Smallest order first.
@@ -39,7 +42,7 @@ class PolynomialExtractor(BaseExtractor):
             parameters = parameters / parameters_max
         return parameters
 
-    def get_polynomial_parameters(self, time_step_0):
+    def get_parameters(self, time_step_0: int, genotype: np.ndarray, genotype_data_index: int) -> np.ndarray:
         if time_step_0 in self.__cache:
             return self.__cache[time_step_0]
 

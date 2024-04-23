@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Dict
-from base_extractor import BaseExtractor
+from ExtractorModules.base_extractor import BaseExtractor
 
 
 class MddExtractor(BaseExtractor):
@@ -11,7 +11,10 @@ class MddExtractor(BaseExtractor):
     def get_parameters_size(self):
         return self._main_extractor.slice_count
 
-    def get_maximum_drawdowns(self, time_step_0):
+    def get_genotype_data_size(self) -> int:
+        return 0
+
+    def get_parameters(self, time_step_0: int, genotype: np.ndarray, genotype_data_index: int) -> np.ndarray:
         if time_step_0 in self.__cache:
             return self.__cache[time_step_0]
 
