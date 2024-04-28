@@ -1,0 +1,11 @@
+{
+    "data_path": "Data/franc_swiss_data.csv",
+    "n_gen": 100,
+    
+    "slice_count": 5,
+    "slice_size": 20,
+    "parameters_per_slice": 4,
+    "slice_overlap": 6,
+
+    "polynomial_degree": 5
+}

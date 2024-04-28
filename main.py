@@ -8,6 +8,7 @@ from ArgumentParser import ArgumentParser
 from loader import Loader
 from exchange_model import ExchangeModel
 from exchange_rate_problem import ExchangeRateProblem
+from json_reader import JSONReader
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
 import matplotlib.pyplot as plt
@@ -73,9 +74,13 @@ def plot_convergence(callback):
     plt.show()
 
 
-def solve(data, algorithm):
-    extractor = DataExtractor(data.history, 5, 20, 4, 5)
-    extractor.add_extractor(PolynomialExtractor(main_extractor=extractor, polynomial_degree=5))
+def solve(data, algorithm, settingsDict):
+    extractor = DataExtractor(data.history,
+                              settingsDict["slice_count"],
+                              settingsDict["slice_size"],
+                              settingsDict["parameters_per_slice"],
+                              settingsDict["slice_overlap"])
+    extractor.add_extractor(PolynomialExtractor(main_extractor=extractor, polynomial_degree=settingsDict["polynomial_degree"]))
     extractor.add_extractor(ExponentialExtractor(main_extractor=extractor))
     extractor.add_extractor(MddExtractor(main_extractor=extractor))
     model = ExchangeModel(data, extractor)
@@ -83,7 +88,7 @@ def solve(data, algorithm):
     callback = ConvergenceCallback()
     res = minimize(problem,
                    algorithm,
-                   ('n_gen', 100),
+                   ('n_gen', settingsDict["n_gen"]),
                    callback=callback,
                    seed=106,
                    verbose=False)
@@ -131,8 +136,9 @@ def solve(data, algorithm):
 def main():
     argument_parser = ArgumentParser()
     args = argument_parser.parse()
+    settingsDict = JSONReader.getJsonDict(args.json_path)
     loader = Loader()
-    data = loader.load_csv_exchange_rate_data(args.data_path)
+    data = loader.load_csv_exchange_rate_data(settingsDict["data_path"])
     data_better = ExchangeRateData(data.history[550:950])
     data_worse = ExchangeRateData(data.history[:400])
 
@@ -148,13 +154,13 @@ def main():
     agemoea = AGEMOEA(pop_size=100)
     smsemoa = SMSEMOA(pop_size=100)
 
-    solve(data=data_worse, algorithm=nsga2)  # Looks good
+    solve(data=data_worse, algorithm=nsga2, settingsDict=settingsDict)  # Looks good
     # solve(data=data_worse, algorithm=agemoea)
     # solve(data=data_worse, algorithm=moead)
     # solve(data=data_worse, algorithm=nsga3)
     # solve(data=data_worse, algorithm=smsemoa)
 
-    solve(data=data_better, algorithm=nsga2)  # Looks good
+    solve(data=data_better, algorithm=nsga2, settingsDict=settingsDict)  # Looks good
     # solve(data=data_better, algorithm=agemoea)
     # solve(data=data_better, algorithm=moead)
     # solve(data=data_better, algorithm=nsga3)
