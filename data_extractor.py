@@ -8,11 +8,10 @@ from ExtractorModules.base_extractor import BaseExtractor
 
 class DataExtractor:
 
-    def __init__(self, data, slice_count, slice_size, parameters_per_slice, slice_overlap):
+    def __init__(self, data, slice_count, slice_size, slice_overlap):
         self.data = data
         self.slice_count = slice_count
         self.slice_size = slice_size
-        self.parameters_per_slice = parameters_per_slice
         self.slice_overlap = slice_overlap
         self.plot_results = False  # Debug
         self._extractors: List[BaseExtractor] = []

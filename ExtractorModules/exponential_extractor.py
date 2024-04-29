@@ -4,11 +4,12 @@ from ExtractorModules.base_extractor import BaseExtractor
 
 
 class ExponentialExtractor(BaseExtractor):
-    def __init__(self, main_extractor):
+    def __init__(self, main_extractor, parameters_per_slice):
         super().__init__(main_extractor)
+        self._parameters_per_slice = parameters_per_slice
 
     def get_parameters_size(self):
-        return self._main_extractor.slice_count * self._main_extractor.parameters_per_slice
+        return self._main_extractor.slice_count * self.parameters_per_slice
 
     def get_genotype_data_size(self) -> int:
         return self._main_extractor.slice_count
@@ -28,21 +29,21 @@ class ExponentialExtractor(BaseExtractor):
         if self._main_extractor.plot_results:
             # Plot individual filters
             plt.plot([i for i in range(time_step - slice_size, time_step)], filtered_data)
-        return self._main_extractor.normalize(filtered_data[-self._main_extractor.parameters_per_slice:])
+        return self._main_extractor.normalize(filtered_data[-self._parameters_per_slice:])
     
     def get_parameters(self, time_step_0: int, genotype: np.ndarray, genotype_data_index: int) -> np.ndarray:
         data = self._main_extractor.data
         slice_count = self._main_extractor.slice_count
         slice_overlap = self._main_extractor.slice_overlap
         slice_size = self._main_extractor.slice_size
-        parameters_per_slice = self._main_extractor.parameters_per_slice
+        self._parameters_per_slice
 
         self._main_extractor.check_starting_time_point(time_step_0)
         if self._main_extractor.plot_results:
             # Plot whole dataset
             plt.plot([i for i in range(len(data))], data)
 
-        parameters = np.zeros((slice_count, parameters_per_slice))
+        parameters = np.zeros((slice_count, self._parameters_per_slice))
         slice_shift = slice_size - slice_overlap
         for i in range(slice_count):
             # Calculate last point of slice

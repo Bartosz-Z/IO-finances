@@ -9,7 +9,7 @@ if __name__ == "__main__":
     data = loader.load_csv_exchange_rate_data("Data/franc_swiss_data.csv")
     data.history = data.history[:200]  # TODO To be removed
 
-    DE = DataExtractor(data.history, slice_count=5, slice_size=40, parameters_per_slice=6, slice_overlap=0)
+    DE = DataExtractor(data.history, slice_count=5, slice_size=40, slice_overlap=0)
     DE.add_extractor(PolynomialExtractor(DE, 5))
     DE.add_extractor(ExponentialExtractor(DE))
     DE.plot_results = True
