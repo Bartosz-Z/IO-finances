@@ -36,7 +36,6 @@ class ExponentialExtractor(BaseExtractor):
         slice_count = self._main_extractor.slice_count
         slice_overlap = self._main_extractor.slice_overlap
         slice_size = self._main_extractor.slice_size
-        self._parameters_per_slice
 
         self._main_extractor.check_starting_time_point(time_step_0)
         if self._main_extractor.plot_results:
