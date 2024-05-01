@@ -8,6 +8,7 @@ from ArgumentParser import ArgumentParser
 from loader import Loader
 from exchange_model import ExchangeModel
 from exchange_rate_problem import ExchangeRateProblem
+from json_reader import JSONReader
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
 import matplotlib.pyplot as plt
@@ -73,19 +74,25 @@ def plot_convergence(callback):
     plt.show()
 
 
-def solve(data, algorithm):
-    extractor = DataExtractor(data.history, 5, 20, 4, 5)
-    extractor.add_extractor(PolynomialExtractor(main_extractor=extractor, polynomial_degree=5))
-    extractor.add_extractor(ExponentialExtractor(main_extractor=extractor))
-    extractor.add_extractor(MddExtractor(main_extractor=extractor))
+def solve(data, algorithm, settings_dict):
+    extractor = DataExtractor(data.history,
+                              settings_dict["slice_count"],
+                              settings_dict["slice_size"],
+                              settings_dict["slice_overlap"])
+    if settings_dict["use_polynomial_extractor"]:
+        extractor.add_extractor(PolynomialExtractor(main_extractor=extractor, polynomial_degree=settings_dict["polynomial_degree"]))
+    if settings_dict["use_exponential_extractor"]:
+        extractor.add_extractor(ExponentialExtractor(main_extractor=extractor, parameters_per_slice=settings_dict["exp_parameters_per_slice"]))
+    if settings_dict["use_mdd_extractor"]:
+        extractor.add_extractor(MddExtractor(main_extractor=extractor))
     model = ExchangeModel(data, extractor)
     problem = ExchangeRateProblem(extractor.get_genotype_size(), model)
     callback = ConvergenceCallback()
     res = minimize(problem,
                    algorithm,
-                   ('n_gen', 100),
+                   ('n_gen', settings_dict["n_gen"]),
                    callback=callback,
-                   seed=106,
+                   seed=settings_dict["seed"],
                    verbose=False)
 
     unique_inds = []
@@ -131,6 +138,7 @@ def solve(data, algorithm):
 def main():
     argument_parser = ArgumentParser()
     args = argument_parser.parse()
+    settings_dict = JSONReader.load(args.json_path)
     loader = Loader()
     data = loader.load_csv_exchange_rate_data(args.data_path)
     data_better = ExchangeRateData(data.history[550:950])
@@ -148,13 +156,13 @@ def main():
     agemoea = AGEMOEA(pop_size=100)
     smsemoa = SMSEMOA(pop_size=100)
 
-    solve(data=data_worse, algorithm=nsga2)  # Looks good
+    solve(data=data_worse, algorithm=nsga2, settings_dict=settings_dict)  # Looks good
     # solve(data=data_worse, algorithm=agemoea)
     # solve(data=data_worse, algorithm=moead)
     # solve(data=data_worse, algorithm=nsga3)
     # solve(data=data_worse, algorithm=smsemoa)
 
-    solve(data=data_better, algorithm=nsga2)  # Looks good
+    solve(data=data_better, algorithm=nsga2, settings_dict=settings_dict)  # Looks good
     # solve(data=data_better, algorithm=agemoea)
     # solve(data=data_better, algorithm=moead)
     # solve(data=data_better, algorithm=nsga3)

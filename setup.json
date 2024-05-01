@@ -1,0 +1,16 @@
+{
+    "seed": 107,
+    "n_gen": 100,
+ 
+    "slice_count": 5,
+    "slice_size": 20,
+    "slice_overlap": 6,
+
+    "use_polynomial_extractor": true,
+    "polynomial_degree": 5,
+
+    "use_exponential_extractor": true,
+    "exp_parameters_per_slice": 4,
+
+    "use_mdd_extractor": true
+}
