@@ -85,8 +85,8 @@ def solve(data, algorithm, settings_dict):
         extractor.add_extractor(ExponentialExtractor(main_extractor=extractor, parameters_per_slice=settings_dict["exp_parameters_per_slice"]))
     if settings_dict["use_mdd_extractor"]:
         extractor.add_extractor(MddExtractor(main_extractor=extractor))
-    model = ExchangeModel(data, extractor)
-    problem = ExchangeRateProblem(extractor.get_genotype_size(), model, processes=6)
+    model = ExchangeModel(data, extractor, settings_dict["start_money"])
+    problem = ExchangeRateProblem(extractor.get_genotype_size(), model, processes=settings_dict["processes"])
     callback = ConvergenceCallback()
     res = minimize(problem,
                    algorithm,
@@ -150,11 +150,11 @@ def main():
         n_neighbors=200,
         prob_neighbor_mating=0.2,
     )
-    nsga2 = NSGA2(pop_size=400)
+    nsga2 = NSGA2(pop_size=settings_dict["population_size"])
     ref_dirs_nsga3 = get_reference_directions("das-dennis", 2, n_partitions=12)
-    nsga3 = NSGA3(pop_size=100, ref_dirs=ref_dirs_nsga3)
-    agemoea = AGEMOEA(pop_size=100)
-    smsemoa = SMSEMOA(pop_size=100)
+    nsga3 = NSGA3(pop_size=settings_dict["population_size"], ref_dirs=ref_dirs_nsga3)
+    agemoea = AGEMOEA(pop_size=settings_dict["population_size"])
+    smsemoa = SMSEMOA(pop_size=settings_dict["population_size"])
 
     solve(data=data_worse, algorithm=nsga2, settings_dict=settings_dict)  # Looks good
     # solve(data=data_worse, algorithm=agemoea)
