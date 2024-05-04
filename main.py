@@ -49,10 +49,10 @@ class ConvergenceCallback(Callback):
 
 
 def plot_result(data, genotype, model, ax):
-    # print(model.evaluate(np.array([oooo]))[0])
-    eval_res = model.evaluate(np.array([genotype]))[0]
-    roi = eval_res[0]
-    mdd = eval_res[1]
+    results = np.empty((1, 2))
+    model.evaluate(np.array([genotype]), results, 0, 1)
+    roi = results[0][0]
+    mdd = results[0][1]
     print(f"Evaluation ROI and MDD: {(-roi * 100):.5f}%, {(mdd * 100):.5f}%")
     print("Genotype:", list(genotype))
     total_money_history = model.get_total_money_history()
@@ -85,8 +85,8 @@ def solve(data, algorithm, settings_dict):
         extractor.add_extractor(ExponentialExtractor(main_extractor=extractor, parameters_per_slice=settings_dict["exp_parameters_per_slice"]))
     if settings_dict["use_mdd_extractor"]:
         extractor.add_extractor(MddExtractor(main_extractor=extractor))
-    model = ExchangeModel(data, extractor)
-    problem = ExchangeRateProblem(extractor.get_genotype_size(), model)
+    model = ExchangeModel(data, extractor, settings_dict["start_money"])
+    problem = ExchangeRateProblem(extractor.get_genotype_size(), model, processes=settings_dict["processes"])
     callback = ConvergenceCallback()
     res = minimize(problem,
                    algorithm,
@@ -150,11 +150,11 @@ def main():
         n_neighbors=200,
         prob_neighbor_mating=0.2,
     )
-    nsga2 = NSGA2(pop_size=100)
+    nsga2 = NSGA2(pop_size=settings_dict["population_size"])
     ref_dirs_nsga3 = get_reference_directions("das-dennis", 2, n_partitions=12)
-    nsga3 = NSGA3(pop_size=100, ref_dirs=ref_dirs_nsga3)
-    agemoea = AGEMOEA(pop_size=100)
-    smsemoa = SMSEMOA(pop_size=100)
+    nsga3 = NSGA3(pop_size=settings_dict["population_size"], ref_dirs=ref_dirs_nsga3)
+    agemoea = AGEMOEA(pop_size=settings_dict["population_size"])
+    smsemoa = SMSEMOA(pop_size=settings_dict["population_size"])
 
     solve(data=data_worse, algorithm=nsga2, settings_dict=settings_dict)  # Looks good
     # solve(data=data_worse, algorithm=agemoea)

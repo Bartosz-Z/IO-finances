@@ -9,7 +9,7 @@ class ExponentialExtractor(BaseExtractor):
         self._parameters_per_slice = parameters_per_slice
 
     def get_parameters_size(self):
-        return self._main_extractor.slice_count * self.parameters_per_slice
+        return self._main_extractor.slice_count * self._parameters_per_slice
 
     def get_genotype_data_size(self) -> int:
         return self._main_extractor.slice_count

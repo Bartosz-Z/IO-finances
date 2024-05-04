@@ -1,10 +1,14 @@
 {
-    "seed": 107,
+    "seed": 106,
     "n_gen": 100,
+    "processes": 6,
+
+    "population_size": 400,
+    "start_money": 1000,
  
     "slice_count": 5,
     "slice_size": 20,
-    "slice_overlap": 6,
+    "slice_overlap": 5,
 
     "use_polynomial_extractor": true,
     "polynomial_degree": 5,

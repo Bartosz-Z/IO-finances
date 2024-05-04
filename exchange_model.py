@@ -1,5 +1,6 @@
 import numpy as np
 import math
+from copy import deepcopy
 
 from exchange_rate_data import ExchangeRateData
 from data_extractor import DataExtractor
@@ -10,12 +11,13 @@ class ExchangeModel:
     def __init__(self, data: ExchangeRateData, data_extractor: DataExtractor, start_money: int = 1000):
         self._data: ExchangeRateData = data
         self._data_extractor = data_extractor
+        self._provision: float = 0.
 
         self._current_step: int = 0
         self._start_step: int = self._data_extractor.get_minimal_time_step()
         self._end_step: int = self._data.size()
 
-        self._start_money = start_money * constants.MONEY_MULTIPLIER
+        self._start_money: int = start_money * constants.MONEY_MULTIPLIER
         self._current_money: int = self._start_money
         self._current_stocks: int = 0
 
@@ -27,6 +29,27 @@ class ExchangeModel:
         self._stocks_history[:self._start_step] = 0
 
         self._ln_99 = np.log(99.)
+
+    def __copy__(self):
+        cls = self.__class__
+        model = cls.__new__(cls)
+
+        model._data = self._data
+        model._data_extractor = self._data_extractor
+        model._provision = self._provision
+        model._current_step = self._current_step
+        model._start_step = self._start_step
+        model._end_step = self._end_step
+        model._start_money = self._start_money
+        model._current_money = self._current_money
+        model._current_stocks = self._current_stocks
+        model._ln_99 = self._ln_99
+
+        model._total_money_history = deepcopy(self._total_money_history)
+        model._money_history = deepcopy(self._money_history)
+        model._stocks_history = deepcopy(self._stocks_history)
+
+        return model
 
     def reset(self):
         self._current_step = 0
@@ -55,17 +78,20 @@ class ExchangeModel:
             val = 1. / (1. + np.exp(e_pow))
         current_rate = self._data.history[self._current_step]
 
+        up_current_rate = int(round((1. + self._provision) * current_rate))
+        down_current_rate = int(round((1. - self._provision) * current_rate))
+
         # For val between 0.49 and 0.51 do nothing
         if val > 0.51:
             # Buy
-            max_stocks_to_buy = self._current_money // current_rate
+            max_stocks_to_buy = self._current_money // up_current_rate
             stocks_to_buy = math.ceil(max_stocks_to_buy * max(1., (val - 0.51) / 0.49))
-            self._current_money -= stocks_to_buy * current_rate
+            self._current_money -= stocks_to_buy * up_current_rate
             self._current_stocks += stocks_to_buy
         elif val < 0.49:
             # Sell
             stocks_to_sell = math.ceil(self._current_stocks * max(1., (0.49 - val) / 0.49))
-            self._current_money += stocks_to_sell * current_rate
+            self._current_money += stocks_to_sell * down_current_rate
             self._current_stocks -= stocks_to_sell
 
     def _step(self, genotype):
@@ -74,16 +100,31 @@ class ExchangeModel:
         self._money_history[self._current_step] = self._current_money
         self._stocks_history[self._current_step] = self._current_stocks
 
-    def evaluate(self, genotypes, investment_time: int = 0):
-        result = np.empty((genotypes.shape[0], 2), dtype=np.float64)
-        for i, genotype in enumerate(genotypes):
+    @classmethod
+    def init_shared_data(cls, shared_out_, shared_genotypes_):
+        global shared_out, shared_genotypes
+        shared_out = shared_out_
+        shared_genotypes = shared_genotypes_
+
+    def evaluate_async(self, genotypes_shape, out_shape, begin_index, end_index, investment_time: int = 0):
+        genotypes = np.frombuffer(shared_genotypes).reshape(genotypes_shape)
+        out = np.frombuffer(shared_out).reshape(out_shape)
+        for i in range(begin_index, end_index):
             self.reset()
             for s in range(self._start_step, max(self._start_step, self._end_step - investment_time)):
                 self._current_step = s
-                self._step(genotype)
-            result[i, 0] = -self._calculate_roi()
-            result[i, 1] = self._calculate_mdd()
-        return result
+                self._step(genotypes[i])
+            out[i, 0] = -self._calculate_roi()
+            out[i, 1] = self._calculate_mdd()
+
+    def evaluate(self, genotypes, out, begin_index, end_index, investment_time: int = 0):
+        for i in range(begin_index, end_index):
+            self.reset()
+            for s in range(self._start_step, max(self._start_step, self._end_step - investment_time)):
+                self._current_step = s
+                self._step(genotypes[i])
+            out[i, 0] = -self._calculate_roi()
+            out[i, 1] = self._calculate_mdd()
 
     def _calculate_total_money(self) -> int:
         return self._current_money + self._current_stocks * self._data.history[self._current_step]
