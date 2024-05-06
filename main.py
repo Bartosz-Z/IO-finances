@@ -1,3 +1,5 @@
+import os.path
+
 import numpy as np
 from pymoo.algorithms.moo.age import AGEMOEA
 from pymoo.algorithms.moo.nsga3 import NSGA3
@@ -65,7 +67,7 @@ def plot_result(data, genotype, model, ax):
     # plt.legend(['Total money for model', 'Money for model', 'Stocks for model', 'Exchange rate'])
 
 
-def plot_convergence(callback):
+def plot_convergence(callback, verbose=False):
     ax = plt.figure().add_subplot(projection='3d')
     ax.scatter(callback.n_evals, callback.rois, callback.mdds)
     ax.set_xlabel('Number of evaluations')
@@ -74,7 +76,7 @@ def plot_convergence(callback):
     plt.show()
 
 
-def solve(data, algorithm, settings_dict):
+def solve(data, algorithm, settings_dict, verbose=False):
     extractor = DataExtractor(data.history,
                               settings_dict["slice_count"],
                               settings_dict["slice_size"],
@@ -107,6 +109,7 @@ def solve(data, algorithm, settings_dict):
         if not found:
             unique_inds.append(res.opt[i])
 
+    # path_to_population = os.path.join('')
     for i in range(len(unique_inds) // 4):
         fig, axs = plt.subplots(2, 2, sharex='all', sharey='all')
         plot_result(data=data, model=model, genotype=unique_inds[i * 4].X, ax=axs[0, 0])
@@ -114,7 +117,9 @@ def solve(data, algorithm, settings_dict):
         plot_result(data=data, model=model, genotype=unique_inds[i * 4 + 2].X, ax=axs[1, 0])
         plot_result(data=data, model=model, genotype=unique_inds[i * 4 + 3].X, ax=axs[1, 1])
         fig.legend(['Total money for model', 'Exchange rate'], loc='upper center', ncol=2)
-        plt.show()
+        # plt.savefig('foo.png')
+        if verbose:
+            plt.show()
     if len(unique_inds) % 4 > 0:
         idx = (len(unique_inds) // 4) * 4
         fig, axs = plt.subplots(2, 2, sharex='all', sharey='all')
@@ -132,7 +137,7 @@ def solve(data, algorithm, settings_dict):
     plt.xlabel("ROI [%]")
     plt.ylabel("MDD [%]")
     plt.show()
-    plot_convergence(callback)
+    plot_convergence(callback, verbose)
 
 
 def main():
@@ -156,13 +161,13 @@ def main():
     agemoea = AGEMOEA(pop_size=settings_dict["population_size"])
     smsemoa = SMSEMOA(pop_size=settings_dict["population_size"])
 
-    solve(data=data_worse, algorithm=nsga2, settings_dict=settings_dict)  # Looks good
+    solve(data=data_worse, algorithm=nsga2, settings_dict=settings_dict, verbose=True)  # Looks good
     # solve(data=data_worse, algorithm=agemoea)
     # solve(data=data_worse, algorithm=moead)
     # solve(data=data_worse, algorithm=nsga3)
     # solve(data=data_worse, algorithm=smsemoa)
 
-    solve(data=data_better, algorithm=nsga2, settings_dict=settings_dict)  # Looks good
+    solve(data=data_better, algorithm=nsga2, settings_dict=settings_dict, verbose=True)  # Looks good
     # solve(data=data_better, algorithm=agemoea)
     # solve(data=data_better, algorithm=moead)
     # solve(data=data_better, algorithm=nsga3)
