@@ -48,6 +48,6 @@ Poniżej znajdują się kolejne metryki zbierzności dla ROI oraz MDD:
 
 Ostanim wykresem jest pokazana cała populacja rozwiązań:
 
-![nsga2_history.png](Images%2FRaports%2FRaport6%2FROI_MDD.PNG)
+![nsga2_history.png](Images%2FRaports%2FRaport6%2FROI_MDD.png)
 
 Można zauważyć, że im większe ryzyko, tym większe zyski przynosi algorytm.
