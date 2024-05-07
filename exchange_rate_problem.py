@@ -5,17 +5,27 @@ from typing import List
 from exchange_model import ExchangeModel
 from copy import copy
 import multiprocessing as mp
+from output_manager import OutputManager
 
 
 class ExchangeRateProblem(Problem):
-    def __init__(self, genotype_size: int, model: ExchangeModel, processes: int = 1):
+    def __init__(self,
+                 genotype_size: int,
+                 model: ExchangeModel,
+                 output_manager: OutputManager,
+                 save_iteration: int = 1,
+                 processes: int = 1):
         super().__init__(n_var=genotype_size, n_obj=2, xl=0.0, xu=1.0)
         self._processes_count: int = processes
         self._models: List[ExchangeModel] = [model]
         for _ in range(self._processes_count - 1):
             self._models.append(copy(self._models[0]))
+        self._output_manager: OutputManager = output_manager
+        self._save_iteration: int = save_iteration
+        self._iteration: int = 0
 
     def _evaluate(self, x, out, *args, **kwargs):
+        print(f"Begin iteration no. {self._iteration}")
         if self._processes_count > 1:
             shared_out = mp.RawArray(ctypes.c_double, x.shape[0] * self.n_obj)
             out["F"] = np.frombuffer(shared_out).reshape((x.shape[0], self.n_obj))
@@ -40,3 +50,8 @@ class ExchangeRateProblem(Problem):
         else:
             out["F"] = np.empty((x.shape[0], self.n_obj))
             self._models[0].evaluate(x, out["F"], 0, x.shape[0])
+
+        self._iteration += 1
+        if self._iteration % self._save_iteration == 0:
+            self._output_manager.set_iteration(self._iteration)
+            self._output_manager.save_all(x, out["F"])

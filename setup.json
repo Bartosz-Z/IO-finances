@@ -2,6 +2,7 @@
     "seed": 106,
     "n_gen": 100,
     "processes": 6,
+    "save_iteration": 20,
 
     "population_size": 400,
     "start_money": 1000,
