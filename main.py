@@ -1,7 +1,3 @@
-from pymoo.algorithms.moo.age import AGEMOEA
-from pymoo.algorithms.moo.nsga3 import NSGA3
-from pymoo.algorithms.moo.sms import SMSEMOA
-
 from ArgumentParser import ArgumentParser
 from loader import Loader
 from exchange_model import ExchangeModel
@@ -9,14 +5,13 @@ from exchange_rate_problem import ExchangeRateProblem
 from json_reader import JSONReader
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
-from pymoo.util.ref_dirs import get_reference_directions
-from pymoo.algorithms.moo.moead import MOEAD
 from data_extractor import DataExtractor
 from ExtractorModules.mdd_extractor import MddExtractor
 from ExtractorModules.polynomial_extractor import PolynomialExtractor
 from ExtractorModules.exponential_extractor import ExponentialExtractor
 from output_manager import OutputManager
 from evaluator import ConvergenceCallback, Evaluator
+from time import time
 
 
 def solve(data, algorithm, settings_dict, output_manager, evaluator):
@@ -39,14 +34,17 @@ def solve(data, algorithm, settings_dict, output_manager, evaluator):
         processes=settings_dict["processes"],
         output_manager=output_manager,
         save_iteration=settings_dict["save_iteration"])
+    timer_start = time()
     res = minimize(problem,
                    algorithm,
                    ('n_gen', settings_dict["n_gen"]),
                    callback=evaluator.get_callback(),
                    seed=settings_dict["seed"],
                    verbose=False)
+    timer_end = time()
+    print(f"Time: {timer_end - timer_start}s")
     output_manager.set_iteration('final')
-    output_manager.save_all(res.X, res.F)
+    output_manager.save_all(res.X, res.F, save_population=True)
 
 
 def main():

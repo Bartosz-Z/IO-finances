@@ -54,4 +54,4 @@ class ExchangeRateProblem(Problem):
         self._iteration += 1
         if self._iteration % self._save_iteration == 0:
             self._output_manager.set_iteration(self._iteration)
-            self._output_manager.save_all(x, out["F"])
+            self._output_manager.save_all(x, out["F"], save_population=False)
