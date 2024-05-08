@@ -29,8 +29,6 @@ class OutputManager:
         if os.path.exists(self._output_path):
             raise ValueError(f'Directory [{self._output_path}] already exist')
         os.makedirs(self._output_path)
-        if not self._verbose:
-            matplotlib.use('Agg')
 
     def set_iteration(self, iteration):
         if isinstance(iteration, int):
@@ -46,9 +44,12 @@ class OutputManager:
     def get_evaluator(self):
         return self._evaluator
 
-    def save_all(self, genotypes, results):
-        for plot_id in self._evaluator.evaluate(genotypes, results):
-            self.save_individuals_plot(plot_id)
+    def save_all(self, genotypes, results, save_population):
+        if save_population:
+            for plot_id in self._evaluator.evaluate(genotypes, results):
+                self.save_individuals_plot(plot_id)
+        else:
+            self._evaluator.fit(genotypes, results)
         self.save_solutions()
         for plot_name in self._evaluator.plot_convergence():
             self.save_plot(plot_name)

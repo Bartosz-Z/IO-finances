@@ -1,3 +1,9 @@
+verbose = False
+if __name__ == '__main__' and not verbose:
+    import matplotlib
+    matplotlib.use('Agg')
+
+
 from ArgumentParser import ArgumentParser
 from loader import Loader
 from exchange_model import ExchangeModel
@@ -53,7 +59,7 @@ def main():
 
     callback = ConvergenceCallback()
     evaluator = Evaluator(callback)
-    output_manager = OutputManager(args.exp_name, args.out, evaluator=evaluator, verbose=False)
+    output_manager = OutputManager(args.exp_name, args.out, evaluator=evaluator, verbose=verbose)
     output_manager.build()
 
     settings_dict = JSONReader.load(args.json_path)
