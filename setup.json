@@ -1,9 +1,10 @@
 {
     "seed": 106,
-    "n_gen": 100,
-    "processes": 6,
+    "n_gen": 3,
+    "processes": 2,
+    "save_iteration": 1,
 
-    "population_size": 400,
+    "population_size": 20,
     "start_money": 1000,
  
     "slice_count": 5,
