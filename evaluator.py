@@ -52,7 +52,7 @@ class Evaluator:
     def get_callback(self):
         return self._callback
 
-    def plot_result(self, genotype, ax):
+    def plot_result(self, genotype, ax, show_roi_and_mdd=False):
         results = np.empty((1, 2))
         self._model.evaluate(np.array([genotype]), results, 0, 1)
         roi = -results[0][0] * 100
@@ -65,6 +65,10 @@ class Evaluator:
         # plt.plot(stocks_history * data.history[0] / constants.MONEY_MULTIPLIER)
         ax.plot(self._data.history / self._data.history[0] * 1000)
         # plt.legend(['Total money for model', 'Money for model', 'Stocks for model', 'Exchange rate'])
+
+        if show_roi_and_mdd:
+            print("ROI:", roi)
+            print("MDD:", mdd)
 
     def plot_convergence(self):
         ax = plt.figure().add_subplot(projection='3d')
