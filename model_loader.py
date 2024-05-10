@@ -19,8 +19,8 @@ def plot_result(model, genotype, ax, data):
     total_money_history = model.get_total_money_history()
     ax.plot(total_money_history / constants.MONEY_MULTIPLIER)
     ax.plot(data.history / data.history[0] * 1000)
-    print("ROI:", roi)
-    print("MDD:", mdd)
+    print("ROI: " + str(roi) + "%")
+    print("MDD: " + str(mdd) + "%")
 
 def main():
     argument_parser = ArgumentParser()
