@@ -1,12 +1,13 @@
 {
     "seed": 106,
-    "n_gen": 3,
-    "processes": 2,
-    "save_iteration": 1,
+    "n_gen": 1500,
+    "processes": 12,
+    "save_iteration": 100,
 
-    "population_size": 20,
+    "population_size": 400,
     "start_money": 1000,
- 
+    "provision": 0.0,
+
     "slice_count": 5,
     "slice_size": 20,
     "slice_overlap": 5,

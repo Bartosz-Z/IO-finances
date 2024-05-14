@@ -8,10 +8,14 @@ import constants
 
 
 class ExchangeModel:
-    def __init__(self, data: ExchangeRateData, data_extractor: DataExtractor, start_money: int = 1000):
+    def __init__(self,
+                 data: ExchangeRateData,
+                 data_extractor: DataExtractor,
+                 provision: float = 0.0,
+                 start_money: int = 1000):
         self._data: ExchangeRateData = data
         self._data_extractor = data_extractor
-        self._provision: float = 0.
+        self._provision: float = provision
 
         self._current_step: int = 0
         self._start_step: int = self._data_extractor.get_minimal_time_step()
