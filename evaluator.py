@@ -55,8 +55,6 @@ class Evaluator:
     def plot_result(self, genotype, ax):
         results = np.empty((1, 2))
         self._model.evaluate(np.array([genotype]), results, 0, 1)
-        roi = -results[0][0] * 100
-        mdd = results[0][1] * 100
         total_money_history = self._model.get_total_money_history()
         # money_history = model.get_money_history()
         # stocks_history = model.get_stocks_history()
@@ -112,7 +110,7 @@ class Evaluator:
                 self._unique_inds.append(i)
 
         for i in self._unique_inds:
-            self._solutions.append(Solution(-results[i][0] * 100, results[i][1], genotypes[i]))
+            self._solutions.append(Solution(-results[i][0] * 100, results[i][1] * 100, genotypes[i]))
 
     def evaluate(self, genotypes, results):
         self.fit(genotypes, results)

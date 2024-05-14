@@ -31,7 +31,7 @@ def solve(data, algorithm, settings_dict, output_manager, evaluator):
         extractor.add_extractor(ExponentialExtractor(main_extractor=extractor, parameters_per_slice=settings_dict["exp_parameters_per_slice"]))
     if settings_dict["use_mdd_extractor"]:
         extractor.add_extractor(MddExtractor(main_extractor=extractor))
-    model = ExchangeModel(data, extractor, settings_dict["start_money"])
+    model = ExchangeModel(data, extractor, provision=settings_dict["provision"], start_money=settings_dict["start_money"])
     evaluator.set_data(data)
     evaluator.set_model(model)
     problem = ExchangeRateProblem(
